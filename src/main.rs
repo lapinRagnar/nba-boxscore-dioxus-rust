@@ -46,15 +46,35 @@ pub fn Hero() -> Element {
     }
 }
 
-/// Home page
 #[component]
 fn Home() -> Element {
     rsx! {
         div {
-            class: "flex items-center justify-center min-h-screen",
-            h1 {
-                class: "text-4xl font-bold text-blue-600",
-                "Hello World he e ! 🏀"
+            class: "min-h-screen bg-orange-50",
+            
+            // Header style NBA
+            div {
+                class: "bg-orange-600 text-white py-6 shadow-lg",
+                h1 {
+                    class: "text-4xl font-bold text-center",
+                    "🏀 NBA Box Score"
+                }
+            }
+            
+            // Contenu principal
+            div {
+                class: "container mx-auto px-4 py-12",
+                div {
+                    class: "max-w-2xl mx-auto bg-white rounded-lg shadow-xl p-8",
+                    h2 {
+                        class: "text-3xl font-bold text-gray-800 mb-4",
+                        "Hello World!"
+                    }
+                    p {
+                        class: "text-gray-600 text-lg",
+                        "Prêt à créer le box score NBA parfait avec Dioxus!"
+                    }
+                }
             }
         }
     }
