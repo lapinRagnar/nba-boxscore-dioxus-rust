@@ -1,494 +1,27 @@
 use dioxus::prelude::*;
 
+mod models;
+mod data;
+mod components;
+mod utils;
+
+use components::{Navbar, Home, BoxScoreDisplay};
+use data::get_mock_match;
+
 #[derive(Debug, Clone, Routable, PartialEq)]
-#[rustfmt::skip]
 enum Route {
     #[layout(Navbar)]
     #[route("/")]
     Home {},
+    #[route("/match/:id")]
+    MatchDetail { id: u32 },
     #[route("/blog/:id")]
     Blog { id: i32 },
 }
 
 const FAVICON: Asset = asset!("/assets/favicon.ico");
 const MAIN_CSS: Asset = asset!("/assets/main.css");
-const HEADER_SVG: Asset = asset!("/assets/header.svg");
 const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
-
-
-// ========== STRUCTURES POUR LA PAGE D'ACCUEIL ==========
-
-#[derive(Debug, Clone, PartialEq)]
-struct Game {
-    id: u32,
-    home_team: String,
-    away_team: String,
-    home_score: Option<u16>,
-    away_score: Option<u16>,
-    status: String, // "Terminé", "Demain", "En cours", etc.
-    time: String,
-    conference: String, // "East" ou "West"
-    is_live: bool,
-}
-
-// ========== DONNÉES DES MATCHS ==========
-
-fn get_games() -> Vec<Game> {
-    vec![
-        // Conférence Est
-        Game {
-            id: 1,
-            home_team: String::from("Knicks"),
-            away_team: String::from("76ers"),
-            home_score: Some(137),
-            away_score: Some(98),
-            status: String::from("Terminé"),
-            time: String::from("RÉCIT DU MATCH"),
-            conference: String::from("East"),
-            is_live: false,
-        },
-        Game {
-            id: 2,
-            home_team: String::from("Knicks"),
-            away_team: String::from("76ers"),
-            home_score: None,
-            away_score: None,
-            status: String::from("Demain"),
-            time: String::from("01:00"),
-            conference: String::from("East"),
-            is_live: false,
-        },
-        Game {
-            id: 3,
-            home_team: String::from("Pistons"),
-            away_team: String::from("Cavaliers"),
-            home_score: Some(111),
-            away_score: Some(101),
-            status: String::from("Terminé"),
-            time: String::from("9:54"),
-            conference: String::from("East"),
-            is_live: false,
-        },
-        // Conférence Ouest
-        Game {
-            id: 4,
-            home_team: String::from("Spurs"),
-            away_team: String::from("Timberwolves"),
-            home_score: Some(102),
-            away_score: Some(104),
-            status: String::from("Terminé"),
-            time: String::from("9:02"),
-            conference: String::from("West"),
-            is_live: false,
-        },
-        Game {
-            id: 5,
-            home_team: String::from("Thunder"),
-            away_team: String::from("Lakers"),
-            home_score: Some(108),
-            away_score: Some(90),
-            status: String::from("Terminé"),
-            time: String::from("5:09"),
-            conference: String::from("West"),
-            is_live: false,
-        },
-        Game {
-            id: 6,
-            home_team: String::from("Spurs"),
-            away_team: String::from("Timberwolves"),
-            home_score: None,
-            away_score: None,
-            status: String::from("Demain"),
-            time: String::from("03:30"),
-            conference: String::from("West"),
-            is_live: false,
-        },
-    ]
-}
-
-
-// ========== STRUCTURES DE DONNÉES NBA ==========
-
-#[derive(Debug, Clone, PartialEq)]
-struct Team {
-    name: String,
-    city: String,
-    logo: String, // emoji ou chemin d'image
-}
-
-#[derive(Debug, Clone, PartialEq)]
-struct PlayerStats {
-    name: String,
-    number: u8,
-    position: String, // "PG", "SG", "SF", "PF", "C"
-    minutes: String,
-    points: u16,
-    rebounds: u8,
-    assists: u8,
-    steals: u8,
-    blocks: u8,
-    turnovers: u8,
-    fouls: u8,
-    field_goals: (u8, u8),      // (réussis, tentés)
-    three_points: (u8, u8),     // (réussis, tentés)
-    free_throws: (u8, u8),      // (réussis, tentés)
-}
-
-#[derive(Debug, Clone, PartialEq)]
-struct TeamBoxScore {
-    team: Team,
-    players: Vec<PlayerStats>,
-    total_points: u16,
-    quarter_scores: [u8; 4], // Q1, Q2, Q3, Q4
-}
-
-#[derive(Debug, Clone, PartialEq)]
-struct Match {
-    id: u32,
-    home_team: TeamBoxScore,
-    away_team: TeamBoxScore,
-    date: String,
-    arena: String,
-    attendance: u32,
-}
-
-
-// ========== DONNÉES MOCK ==========
-
-fn get_mock_match() -> Match {
-    // Lakers (domicile)
-    let lakers = Team {
-        name: String::from("Lakers"),
-        city: String::from("Los Angeles"),
-        logo: String::from("💜"),
-    };
-    
-    let lakers_players = vec![
-        PlayerStats {
-            name: String::from("LeBron James"),
-            number: 23,
-            position: String::from("SF"),
-            minutes: String::from("36:24"),
-            points: 28,
-            rebounds: 8,
-            assists: 10,
-            steals: 2,
-            blocks: 1,
-            turnovers: 3,
-            fouls: 2,
-            field_goals: (10, 19),
-            three_points: (2, 5),
-            free_throws: (6, 8),
-        },
-        PlayerStats {
-            name: String::from("Anthony Davis"),
-            number: 3,
-            position: String::from("PF"),
-            minutes: String::from("34:12"),
-            points: 24,
-            rebounds: 12,
-            assists: 3,
-            steals: 1,
-            blocks: 4,
-            turnovers: 2,
-            fouls: 3,
-            field_goals: (9, 16),
-            three_points: (1, 3),
-            free_throws: (5, 6),
-        },
-        PlayerStats {
-            name: String::from("D'Angelo Russell"),
-            number: 1,
-            position: String::from("PG"),
-            minutes: String::from("32:08"),
-            points: 18,
-            rebounds: 3,
-            assists: 7,
-            steals: 1,
-            blocks: 0,
-            turnovers: 2,
-            fouls: 1,
-            field_goals: (6, 14),
-            three_points: (3, 8),
-            free_throws: (3, 4),
-        },
-    ];
-    
-    let lakers_box = TeamBoxScore {
-        team: lakers,
-        players: lakers_players,
-        total_points: 112,
-        quarter_scores: [28, 30, 26, 28],
-    };
-    
-    // Warriors (extérieur)
-    let warriors = Team {
-        name: String::from("Warriors"),
-        city: String::from("Golden State"),
-        logo: String::from("🔵"),
-    };
-    
-    let warriors_players = vec![
-        PlayerStats {
-            name: String::from("Stephen Curry"),
-            number: 30,
-            position: String::from("PG"),
-            minutes: String::from("35:42"),
-            points: 32,
-            rebounds: 5,
-            assists: 6,
-            steals: 2,
-            blocks: 0,
-            turnovers: 4,
-            fouls: 2,
-            field_goals: (11, 24),
-            three_points: (6, 14),
-            free_throws: (4, 4),
-        },
-        PlayerStats {
-            name: String::from("Klay Thompson"),
-            number: 11,
-            position: String::from("SG"),
-            minutes: String::from("33:15"),
-            points: 22,
-            rebounds: 4,
-            assists: 2,
-            steals: 1,
-            blocks: 1,
-            turnovers: 1,
-            fouls: 2,
-            field_goals: (8, 18),
-            three_points: (4, 10),
-            free_throws: (2, 2),
-        },
-    ];
-    
-    let warriors_box = TeamBoxScore {
-        team: warriors,
-        players: warriors_players,
-        total_points: 108,
-        quarter_scores: [25, 28, 30, 25],
-    };
-    
-    Match {
-        id: 1,
-        home_team: lakers_box,
-        away_team: warriors_box,
-        date: String::from("2026-05-15"),
-        arena: String::from("Crypto.com Arena"),
-        attendance: 18997,
-    }
-}
-
-
-// ========== COMPOSANTS D'AFFICHAGE ==========
-
-#[component]
-fn BoxScoreDisplay(match_data: Match) -> Element {
-    rsx! {
-        div {
-            class: "max-w-6xl mx-auto",
-            
-            // Header du match
-            // Header du match
-            div {
-                class: "bg-white rounded-lg shadow-lg p-6 mb-6",
-                div {
-                    class: "flex justify-between items-center",
-                    // Équipe extérieure (gauche)
-                    div {
-                        class: "text-center flex-1",
-                        div {
-                            class: "text-5xl mb-2",
-                            "{match_data.away_team.team.logo}"
-                        }
-                        h3 {
-                            style: "color: black; font-size: 24px; font-weight: bold;",
-                            "{match_data.away_team.team.city} {match_data.away_team.team.name}"
-                        }
-                        div {
-                            style: "color: #ea580c; font-size: 36px; font-weight: bold; margin-top: 8px;",
-                            "{match_data.away_team.total_points}"
-                        }
-                    },
-                    
-                    // VS central
-                    div {
-                        class: "text-center px-8",
-                        div {
-                            style: "color: #6b7280; font-size: 30px; font-weight: bold;",
-                            "VS"
-                        }
-                        div {
-                            style: "color: #6b7280; font-size: 14px; margin-top: 8px;",
-                            "{match_data.date}"
-                        }
-                    },
-                    
-                    // Équipe domicile (droite)
-                    div {
-                        class: "text-center flex-1",
-                        div {
-                            class: "text-5xl mb-2",
-                            "{match_data.home_team.team.logo}"
-                        }
-                        h3 {
-                            style: "color: black; font-size: 24px; font-weight: bold;",
-                            "{match_data.home_team.team.city} {match_data.home_team.team.name}"
-                        }
-                        div {
-                            style: "color: #ea580c; font-size: 36px; font-weight: bold; margin-top: 8px;",
-                            "{match_data.home_team.total_points}"
-                        }
-                    }
-                },
-                
-                // Infos match
-                div {
-                    style: "text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb; color: #4b5563;",
-                    p {
-                        "📍 {match_data.arena} • 👥 {match_data.attendance} spectateurs"
-                    }
-                }
-            }
-            
-            // Scores par quart-temps
-           
-           // Scores par quart-temps
-            div {
-                class: "bg-white rounded-lg shadow-lg p-6 mb-6 overflow-x-auto",
-                h4 {
-                    style: "color: black; font-weight: bold; font-size: 20px; margin-bottom: 16px;",
-                    "Scores par quart-temps"
-                }
-                table {
-                    style: "width: 100%; border-collapse: collapse; color: black;",
-                    thead {
-                        tr {
-                            style: "background-color: #e5e7eb;",
-                            th { style: "border: 1px solid #d1d5db; padding: 12px; text-align: left; color: black;", "" }
-                            th { style: "border: 1px solid #d1d5db; padding: 12px; text-align: center; color: black;", "Q1" }
-                            th { style: "border: 1px solid #d1d5db; padding: 12px; text-align: center; color: black;", "Q2" }
-                            th { style: "border: 1px solid #d1d5db; padding: 12px; text-align: center; color: black;", "Q3" }
-                            th { style: "border: 1px solid #d1d5db; padding: 12px; text-align: center; color: black;", "Q4" }
-                            th { style: "border: 1px solid #d1d5db; padding: 12px; text-align: center; color: black;", "TOTAL" }
-                        }
-                    }
-                    tbody {
-                        // Équipe extérieure
-                        tr {
-                            td { 
-                                style: "border: 1px solid #d1d5db; padding: 12px; font-weight: 600; color: black;",
-                                "{match_data.away_team.team.logo} {match_data.away_team.team.city}"
-                            }
-                            for quarter in match_data.away_team.quarter_scores.iter() {
-                                td { style: "border: 1px solid #d1d5db; padding: 12px; text-align: center; color: black;", "{quarter}" }
-                            }
-                            td { 
-                                style: "border: 1px solid #d1d5db; padding: 12px; text-align: center; font-weight: bold; color: #ea580c;",
-                                "{match_data.away_team.total_points}"
-                            }
-                        }
-                        // Équipe domicile
-                        tr {
-                            td { 
-                                style: "border: 1px solid #d1d5db; padding: 12px; font-weight: 600; color: black;",
-                                "{match_data.home_team.team.logo} {match_data.home_team.team.city}"
-                            }
-                            for quarter in match_data.home_team.quarter_scores.iter() {
-                                td { style: "border: 1px solid #d1d5db; padding: 12px; text-align: center; color: black;", "{quarter}" }
-                            }
-                            td { 
-                                style: "border: 1px solid #d1d5db; padding: 12px; text-align: center; font-weight: bold; color: #ea580c;",
-                                "{match_data.home_team.total_points}"
-                            }
-                        }
-                    }
-                }
-            }
-            
-
-            // haha 
-
-            // Statistiques Lakers
-            // Statistiques joueurs
-            div {
-                class: "bg-white rounded-lg shadow-lg p-6",
-                h4 {
-                    style: "color: black; font-weight: bold; font-size: 20px; margin-bottom: 16px;",
-                    "Statistiques individuelles"
-                }
-                
-                // Lakers
-                div {
-                    class: "mb-6",
-                    h5 {
-                        style: "color: #9333ea; font-weight: bold; font-size: 18px; margin-bottom: 8px;",
-                        "💜 Los Angeles Lakers"
-                    }
-                    table {
-                        style: "width: 100%; border-collapse: collapse; color: black;",
-                        thead {
-                            tr {
-                                style: "background-color: #e5e7eb;",
-                                th { style: "border: 1px solid #d1d5db; padding: 8px; text-align: left; color: black;", "Joueur" }
-                                th { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; color: black;", "Pts" }
-                                th { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; color: black;", "Rbd" }
-                                th { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; color: black;", "Ast" }
-                                th { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; color: black;", "Min" }
-                            }
-                        }
-                        tbody {
-                            for player in &match_data.home_team.players {
-                                tr {
-                                    td { style: "border: 1px solid #d1d5db; padding: 8px; color: black;", "{player.name} #{player.number}" }
-                                    td { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; font-weight: bold; color: black;", "{player.points}" }
-                                    td { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; color: black;", "{player.rebounds}" }
-                                    td { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; color: black;", "{player.assists}" }
-                                    td { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; color: black;", "{player.minutes}" }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // Warriors
-                div {
-                    h5 {
-                        style: "color: #2563eb; font-weight: bold; font-size: 18px; margin-bottom: 8px;",
-                        "🔵 Golden State Warriors"
-                    }
-                    table {
-                        style: "width: 100%; border-collapse: collapse; color: black;",
-                        thead {
-                            tr {
-                                style: "background-color: #e5e7eb;",
-                                th { style: "border: 1px solid #d1d5db; padding: 8px; text-align: left; color: black;", "Joueur" }
-                                th { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; color: black;", "Pts" }
-                                th { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; color: black;", "Rbd" }
-                                th { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; color: black;", "Ast" }
-                                th { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; color: black;", "Min" }
-                            }
-                        }
-                        tbody {
-                            for player in &match_data.away_team.players {
-                                tr {
-                                    td { style: "border: 1px solid #d1d5db; padding: 8px; color: black;", "{player.name} #{player.number}" }
-                                    td { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; font-weight: bold; color: black;", "{player.points}" }
-                                    td { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; color: black;", "{player.rebounds}" }
-                                    td { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; color: black;", "{player.assists}" }
-                                    td { style: "border: 1px solid #d1d5db; padding: 8px; text-align: center; color: black;", "{player.minutes}" }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-
-        }
-    }
-}
 
 fn main() {
     dioxus::launch(App);
@@ -498,306 +31,57 @@ fn main() {
 fn App() -> Element {
     rsx! {
         document::Link { rel: "icon", href: FAVICON }
-        document::Link { rel: "stylesheet", href: MAIN_CSS } document::Link { rel: "stylesheet", href: TAILWIND_CSS }
+        document::Link { rel: "stylesheet", href: MAIN_CSS }
+        document::Link { rel: "stylesheet", href: TAILWIND_CSS }
         Router::<Route> {}
     }
 }
 
 #[component]
-pub fn Hero() -> Element {
+fn MatchDetail(id: u32) -> Element {
+    let match_data = get_mock_match();
     rsx! {
         div {
-            id: "hero",
-            img { src: HEADER_SVG, id: "header" }
-            div { id: "links",
-                a { href: "https://dioxuslabs.com/learn/0.7/", "📚 Learn Dioxus" }
-                a { href: "https://dioxuslabs.com/awesome", "🚀 Awesome Dioxus" }
-                a { href: "https://github.com/dioxus-community/", "📡 Community Libraries" }
-                a { href: "https://github.com/DioxusLabs/sdk", "⚙️ Dioxus Development Kit" }
-                a { href: "https://marketplace.visualstudio.com/items?itemName=DioxusLabs.dioxus", "💫 VSCode Extension" }
-                a { href: "https://discord.gg/XgGxMSkvUM", "👋 Community Discord" }
+            class: "min-h-screen bg-gray-50 py-8",
+            div {
+                class: "bg-orange-700 text-white py-6 shadow-lg mb-8",
+                h1 {
+                    class: "text-4xl font-bold text-center",
+                    "🏀 NBA Box Score - Match #{id}"
+                }
+            }
+            div {
+                class: "container mx-auto px-4",
+                BoxScoreDisplay { match_data }
             }
         }
     }
 }
 
-
-#[component]
-fn Home() -> Element {
-    let games = get_games();
-    let east_games: Vec<_> = games.iter().filter(|g| g.conference == "East").collect();
-    let west_games: Vec<_> = games.iter().filter(|g| g.conference == "West").collect();
-    
-    rsx! {
-        div {
-            class: "min-h-screen bg-gray-900",
-            
-            // Header
-            div {
-                class: "bg-gradient-to-r from-blue-900 to-gray-900 text-white py-8",
-                div {
-                    class: "container mx-auto px-4",
-                    h1 {
-                        class: "text-5xl font-black text-center mb-2",
-                        "🏀 NBA"
-                    }
-                    p {
-                        class: "text-center text-gray-400 text-lg",
-                        "Demi-finales de Conférence"
-                    }
-                }
-            }
-            
-            // Navigation tabs
-            div {
-                class: "border-b border-gray-700 bg-gray-800",
-                div {
-                    class: "container mx-auto px-4",
-                    div {
-                        class: "flex space-x-8",
-                        div { class: "px-4 py-3 text-orange-500 border-b-2 border-orange-500 font-bold", "MATCHS" }
-                        div { class: "px-4 py-3 text-gray-400 hover:text-white cursor-pointer", "PHASE FINALE" }
-                        div { class: "px-4 py-3 text-gray-400 hover:text-white cursor-pointer", "CLASSEMENT" }
-                        div { class: "px-4 py-3 text-gray-400 hover:text-white cursor-pointer", "STATS" }
-                        div { class: "px-4 py-3 text-gray-400 hover:text-white cursor-pointer", "JOUEURS" }
-                    }
-                }
-            }
-            
-            // Contenu principal - 2 colonnes
-            div {
-                class: "container mx-auto px-4 py-8",
-                div {
-                    class: "grid grid-cols-1 lg:grid-cols-2 gap-8",
-                    
-                    // Colonne Conférence Est
-                    div {
-                        class: "bg-gray-800 rounded-xl overflow-hidden",
-                        div {
-                            class: "bg-gray-700 px-6 py-4",
-                            h2 {
-                                class: "text-xl font-bold text-white",
-                                "Conférence Est"
-                            }
-                        }
-                        div {
-                            class: "divide-y divide-gray-700",
-                            for game in east_games {
-                                div {
-                                    class: "p-4 hover:bg-gray-750 transition-colors",
-                                    
-                                    // Entête du match (équipes et score)
-                                    div {
-                                        class: "flex justify-between items-start",
-                                        div {
-                                            class: "flex-1",
-                                            div {
-                                                class: "flex justify-between items-center",
-                                                // Équipe domicile
-                                                div {
-                                                    class: "flex items-center gap-3 mb-2",
-                                                    span { class: "text-gray-400 text-sm", "vs" }
-                                                    span { class: "font-bold text-white", "{game.home_team}" }
-                                                }
-                                                // Score domicile
-                                                if let Some(score) = game.home_score {
-                                                    span { class: "text-2xl font-bold text-white", "{score}" }
-                                                } else if game.status == "Demain" {
-                                                    span { class: "text-orange-500 font-bold", "Demain" }
-                                                }
-                                            }
-                                            div {
-                                                class: "flex justify-between items-center",
-                                                // Équipe extérieure
-                                                div {
-                                                    class: "flex items-center gap-3",
-                                                    span { class: "text-gray-500", "{game.away_team}" }
-                                                }
-                                                // Score extérieur
-                                                if let Some(score) = game.away_score {
-                                                    span { class: "text-2xl font-bold text-white", "{score}" }
-                                                } else if game.status == "Demain" {
-                                                    span { class: "text-orange-500 font-bold", "{game.time}" }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    
-                                    // Footer du match
-                                    div {
-                                        class: "mt-3 pt-3 border-t border-gray-700 flex justify-between items-center",
-                                        if game.is_live {
-                                            span { class: "text-red-500 text-sm font-bold animate-pulse", "LIVE" }
-                                        } else if game.status == "Terminé" {
-                                            span { class: "text-gray-500 text-sm", "Terminé" }
-                                            span { class: "text-orange-400 text-sm cursor-pointer hover:underline", "RÉCIT DU MATCH →" }
-                                        } else {
-                                            span { class: "text-gray-500 text-sm", "{game.time}" }
-                                            span { class: "text-orange-400 text-sm cursor-pointer hover:underline", "APERÇU DU MATCH →" }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Colonne Conférence Ouest
-                    div {
-                        class: "bg-gray-800 rounded-xl overflow-hidden",
-                        div {
-                            class: "bg-gray-700 px-6 py-4",
-                            h2 {
-                                class: "text-xl font-bold text-white",
-                                "Conférence Ouest"
-                            }
-                        }
-                        div {
-                            class: "divide-y divide-gray-700",
-                            for game in west_games {
-                                div {
-                                    class: "p-4 hover:bg-gray-750 transition-colors",
-                                    
-                                    // Entête du match
-                                    div {
-                                        class: "flex justify-between items-start",
-                                        div {
-                                            class: "flex-1",
-                                            div {
-                                                class: "flex justify-between items-center",
-                                                div {
-                                                    class: "flex items-center gap-3 mb-2",
-                                                    span { class: "text-gray-400 text-sm", "vs" }
-                                                    span { class: "font-bold text-white", "{game.home_team}" }
-                                                }
-                                                if let Some(score) = game.home_score {
-                                                    span { class: "text-2xl font-bold text-white", "{score}" }
-                                                } else if game.status == "Demain" {
-                                                    span { class: "text-orange-500 font-bold", "Demain" }
-                                                }
-                                            }
-                                            div {
-                                                class: "flex justify-between items-center",
-                                                div {
-                                                    class: "flex items-center gap-3",
-                                                    span { class: "text-gray-500", "{game.away_team}" }
-                                                }
-                                                if let Some(score) = game.away_score {
-                                                    span { class: "text-2xl font-bold text-white", "{score}" }
-                                                } else if game.status == "Demain" {
-                                                    span { class: "text-orange-500 font-bold", "{game.time}" }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    
-                                    // Footer
-                                    div {
-                                        class: "mt-3 pt-3 border-t border-gray-700 flex justify-between items-center",
-                                        if game.is_live {
-                                            span { class: "text-red-500 text-sm font-bold animate-pulse", "LIVE" }
-                                        } else if game.status == "Terminé" {
-                                            span { class: "text-gray-500 text-sm", "Terminé" }
-                                            span { class: "text-orange-400 text-sm cursor-pointer hover:underline", "RÉCIT DU MATCH →" }
-                                        } else {
-                                            span { class: "text-gray-500 text-sm", "{game.time}" }
-                                            span { class: "text-orange-400 text-sm cursor-pointer hover:underline", "APERÇU DU MATCH →" }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Footer
-            div {
-                class: "text-center py-6 text-gray-500 text-sm border-t border-gray-800 mt-8",
-                p { "Heure locale à Paris" }
-                p { class: "mt-2", 
-                    span { class: "text-orange-400 cursor-pointer hover:underline", "Voir plus" }
-                    span { " →" }
-                }
-            }
-        }
-    }
-}
-
-
-/// Blog page
 #[component]
 pub fn Blog(id: i32) -> Element {
     rsx! {
         div {
-            id: "blog",
-
-            // Content
-            h1 { "This is blog #{id}!" }
-            p { "In blog #{id}, we show how the Dioxus router works and how URL parameters can be passed as props to our route components." }
-
-            // Navigation links
-            Link {
-                to: Route::Blog { id: id - 1 },
-                "Previous"
+            class: "min-h-screen bg-gray-50 py-8",
+            div {
+                class: "bg-orange-700 text-white py-6 shadow-lg mb-8",
+                h1 {
+                    class: "text-4xl font-bold text-center",
+                    "📝 Blog Post #{id}"
+                }
             }
-            span { " <---> " }
-            Link {
-                to: Route::Blog { id: id + 1 },
-                "Next"
-            }
-        }
-    }
-}
-
-/// Shared navbar component.
-#[component]
-fn Navbar() -> Element {
-    rsx! {
-        div {
-            id: "navbar",
-            Link {
-                to: Route::Home {},
-                "Home"
-            }
-            Link {
-                to: Route::Blog { id: 1 },
-                "Blog"
-            }
-        }
-
-        Outlet::<Route> {}
-    }
-}
-
-/// Echo component that demonstrates fullstack server functions.
-#[component]
-fn Echo() -> Element {
-    let mut response = use_signal(|| String::new());
-
-    rsx! {
-        div {
-            id: "echo",
-            h4 { "ServerFn Echo" }
-            input {
-                placeholder: "Type here to echo...",
-                oninput:  move |event| async move {
-                    let data = echo_server(event.value()).await.unwrap();
-                    response.set(data);
-                },
-            }
-
-            if !response().is_empty() {
-                p {
-                    "Server echoed: "
-                    i { "{response}" }
+            div {
+                class: "container mx-auto px-4 max-w-3xl",
+                div {
+                    class: "bg-white rounded-lg shadow-lg p-8",
+                    p { class: "text-gray-600 text-lg", "Contenu du blog post #{id}..." }
+                    Link {
+                        to: Route::Home {},
+                        class: "mt-6 inline-block bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors",
+                        "← Retour à l'accueil"
+                    }
                 }
             }
         }
     }
-}
-
-/// Echo the user input on the server.
-#[post("/api/echo")]
-async fn echo_server(input: String) -> Result<String, ServerFnError> {
-    Ok(input)
 }

@@ -9,7 +9,7 @@ pub fn Navbar() -> Element {
             Link {
                 to: Route::Home {},
                 class: "hover:text-orange-400",
-                "🏠 Home"
+                "🏠 Accueil"
             }
             Link {
                 to: Route::Blog { id: 1 },

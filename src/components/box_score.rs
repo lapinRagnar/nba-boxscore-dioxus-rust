@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 use crate::models::Match;
-use crate::utils::get_percentage;
+// use crate::utils::get_percentage;
 
 #[component]
 pub fn BoxScoreDisplay(match_data: Match) -> Element {
