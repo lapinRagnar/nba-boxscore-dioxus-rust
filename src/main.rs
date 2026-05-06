@@ -260,17 +260,56 @@ fn BoxScoreDisplay(match_data: Match) -> Element {
                 }
             }
             
-            // Scores par quart-temps (à venir)
+            // Scores par quart-temps
             div {
-                class: "bg-white rounded-lg shadow-lg p-6 mb-6",
+                class: "bg-white rounded-lg shadow-lg p-6 mb-6 overflow-x-auto",
                 h4 {
                     class: "text-xl font-bold text-gray-800 mb-4",
                     "Scores par quart-temps"
                 }
-                // On ajoutera le tableau des quart-temps ici
-                div {
-                    class: "text-center text-gray-500",
-                    "(Tableau des quart-temps à venir)"
+                table {
+                    class: "w-full border-collapse",
+                    thead {
+                        class: "bg-gray-100",
+                        tr {
+                            th { class: "border p-3 text-left", "" }
+                            th { class: "border p-3 text-center", "Q1" }
+                            th { class: "border p-3 text-center", "Q2" }
+                            th { class: "border p-3 text-center", "Q3" }
+                            th { class: "border p-3 text-center", "Q4" }
+                            th { class: "border p-3 text-center", "TOTAL" }
+                        }
+                    }
+                    tbody {
+                        // Équipe extérieure
+                        tr {
+                            td { 
+                                class: "border p-3 font-semibold",
+                                "{match_data.away_team.team.logo} {match_data.away_team.team.city}"
+                            }
+                            for quarter in match_data.away_team.quarter_scores.iter() {
+                                td { class: "border p-3 text-center", "{quarter}" }
+                            }
+                            td { 
+                                class: "border p-3 text-center font-bold text-orange-600",
+                                "{match_data.away_team.total_points}"
+                            }
+                        }
+                        // Équipe domicile
+                        tr {
+                            td { 
+                                class: "border p-3 font-semibold",
+                                "{match_data.home_team.team.logo} {match_data.home_team.team.city}"
+                            }
+                            for quarter in match_data.home_team.quarter_scores.iter() {
+                                td { class: "border p-3 text-center", "{quarter}" }
+                            }
+                            td { 
+                                class: "border p-3 text-center font-bold text-orange-600",
+                                "{match_data.home_team.total_points}"
+                            }
+                        }
+                    }
                 }
             }
             
