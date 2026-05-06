@@ -15,6 +15,52 @@ const MAIN_CSS: Asset = asset!("/assets/main.css");
 const HEADER_SVG: Asset = asset!("/assets/header.svg");
 const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
 
+
+// ========== STRUCTURES DE DONNÉES NBA ==========
+
+#[derive(Debug, Clone, PartialEq)]
+struct Team {
+    name: String,
+    city: String,
+    logo: String, // emoji ou chemin d'image
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct PlayerStats {
+    name: String,
+    number: u8,
+    position: String, // "PG", "SG", "SF", "PF", "C"
+    minutes: String,
+    points: u16,
+    rebounds: u8,
+    assists: u8,
+    steals: u8,
+    blocks: u8,
+    turnovers: u8,
+    fouls: u8,
+    field_goals: (u8, u8),      // (réussis, tentés)
+    three_points: (u8, u8),     // (réussis, tentés)
+    free_throws: (u8, u8),      // (réussis, tentés)
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct TeamBoxScore {
+    team: Team,
+    players: Vec<PlayerStats>,
+    total_points: u16,
+    quarter_scores: [u8; 4], // Q1, Q2, Q3, Q4
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct Match {
+    id: u32,
+    home_team: TeamBoxScore,
+    away_team: TeamBoxScore,
+    date: String,
+    arena: String,
+    attendance: u32,
+}
+
 fn main() {
     dioxus::launch(App);
 }
