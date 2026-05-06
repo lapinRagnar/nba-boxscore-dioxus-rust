@@ -190,6 +190,106 @@ fn get_mock_match() -> Match {
 }
 
 
+// ========== COMPOSANTS D'AFFICHAGE ==========
+
+#[component]
+fn BoxScoreDisplay(match_data: Match) -> Element {
+    rsx! {
+        div {
+            class: "max-w-6xl mx-auto",
+            
+            // Header du match
+            div {
+                class: "bg-white rounded-lg shadow-lg p-6 mb-6",
+                div {
+                    class: "flex justify-between items-center",
+                    // Équipe extérieure (gauche)
+                    div {
+                        class: "text-center flex-1",
+                        div {
+                            class: "text-5xl mb-2",
+                            "{match_data.away_team.team.logo}"
+                        }
+                        h3 {
+                            class: "text-2xl font-bold text-gray-800",
+                            "{match_data.away_team.team.city} {match_data.away_team.team.name}"
+                        }
+                        div {
+                            class: "text-4xl font-bold text-orange-600 mt-2",
+                            "{match_data.away_team.total_points}"
+                        }
+                    },
+                    
+                    // VS central
+                    div {
+                        class: "text-center px-8",
+                        div {
+                            class: "text-3xl font-bold text-gray-500",
+                            "VS"
+                        }
+                        div {
+                            class: "text-sm text-gray-500 mt-2",
+                            "{match_data.date}"
+                        }
+                    },
+                    
+                    // Équipe domicile (droite)
+                    div {
+                        class: "text-center flex-1",
+                        div {
+                            class: "text-5xl mb-2",
+                            "{match_data.home_team.team.logo}"
+                        }
+                        h3 {
+                            class: "text-2xl font-bold text-gray-800",
+                            "{match_data.home_team.team.city} {match_data.home_team.team.name}"
+                        }
+                        div {
+                            class: "text-4xl font-bold text-orange-600 mt-2",
+                            "{match_data.home_team.total_points}"
+                        }
+                    }
+                },
+                
+                // Infos match
+                div {
+                    class: "text-center mt-4 pt-4 border-t border-gray-200 text-gray-600",
+                    p {
+                        "📍 {match_data.arena} • 👥 {match_data.attendance} spectateurs"
+                    }
+                }
+            }
+            
+            // Scores par quart-temps (à venir)
+            div {
+                class: "bg-white rounded-lg shadow-lg p-6 mb-6",
+                h4 {
+                    class: "text-xl font-bold text-gray-800 mb-4",
+                    "Scores par quart-temps"
+                }
+                // On ajoutera le tableau des quart-temps ici
+                div {
+                    class: "text-center text-gray-500",
+                    "(Tableau des quart-temps à venir)"
+                }
+            }
+            
+            // Statistiques joueurs (à venir)
+            div {
+                class: "bg-white rounded-lg shadow-lg p-6",
+                h4 {
+                    class: "text-xl font-bold text-gray-800 mb-4",
+                    "Statistiques individuelles"
+                }
+                div {
+                    class: "text-center text-gray-500",
+                    "(Tableau des stats à venir)"
+                }
+            }
+        }
+    }
+}
+
 fn main() {
     dioxus::launch(App);
 }
@@ -221,39 +321,33 @@ pub fn Hero() -> Element {
     }
 }
 
+
 #[component]
 fn Home() -> Element {
+    let match_data = get_mock_match();
+    
     rsx! {
         div {
-            class: "min-h-screen bg-orange-50",
+            class: "min-h-screen bg-orange-50 py-8",
             
             // Header style NBA
             div {
-                class: "bg-orange-600 text-white py-6 shadow-lg",
+                class: "bg-orange-600 text-white py-6 shadow-lg mb-8",
                 h1 {
                     class: "text-4xl font-bold text-center",
                     "🏀 NBA Box Score"
                 }
             }
             
-            // Contenu principal
+            // Box Score
             div {
-                class: "container mx-auto px-4 py-12",
-                div {
-                    class: "max-w-2xl mx-auto bg-white rounded-lg shadow-xl p-8",
-                    h2 {
-                        class: "text-3xl font-bold text-gray-800 mb-4",
-                        "Hello World!"
-                    }
-                    p {
-                        class: "text-gray-600 text-lg",
-                        "Prêt à créer le box score NBA parfait avec Dioxus!"
-                    }
-                }
+                class: "container mx-auto px-4",
+                BoxScoreDisplay { match_data: match_data }
             }
         }
     }
 }
+
 
 /// Blog page
 #[component]
